@@ -35,7 +35,7 @@
   --text-light: #9480c0;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html{overflow-x:hidden;background:#C9A8DF;}
+html{overflow-x:hidden;}
 body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
 /* ── SCROLLBAR ── */
@@ -673,7 +673,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .btn-outline{background:white;border:1.5px solid rgba(155,125,202,.25);color:var(--lav-dark);}
 .btn-outline:hover{background:var(--lav-pale);border-color:var(--lav);}
 /* Time Off Requests Page */
-.toff-tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-light);padding:0 24px;}
+.toff-tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-light);padding:0 24px;position:sticky;top:44px;z-index:10;background:white;}
 .toff-tab{
   padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;
   color:var(--text-light);font-family:'DM Sans',sans-serif;border-bottom:3px solid transparent;
@@ -852,9 +852,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   .panels-row,.att-panels,.reports-grid{grid-template-columns:1fr;}
   .day-strip,.day-cols{grid-template-columns:repeat(4,1fr);}
   .header-nav{display:none;}
-  .header{height:52px;padding:0 10px;position:fixed;top:0;left:0;right:0;z-index:100;}
-  .notif-bar{font-size:12px;padding:8px 12px;position:fixed;top:52px;left:0;right:0;z-index:99;}
-  .app-body{margin-top:52px;}
+  .header{height:52px;padding:0 10px;}
   .logo-icon{width:36px !important;height:36px !important;}
   .logo-icon img{width:28px !important;height:28px !important;}
   .logo h1{font-size:14px;}
@@ -868,6 +866,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   .user-chip .user-name{display:none;}
   .user-chip .user-role{display:none;}
   .quick-actions-dd{right:-10px;}
+  .notif-bar{font-size:12px;padding:8px 12px;}
 }
 
 /* ── Mobile Simplified Dashboard ── */
@@ -1032,7 +1031,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .ms-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; background: linear-gradient(135deg,#3D1A5C,#6B4FA0);
-  color: white;
+  color: white; position: sticky; top: 0; z-index: 20;
 }
 .ms-title { font-family: 'Playfair Display',serif; font-size: 20px; font-weight: 700; }
 .ms-header-icons { display: flex; gap: 12px; }
@@ -1040,7 +1039,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .ms-hdr-icon:active { opacity: 1; }
 .ms-tabs {
   display: flex; background: linear-gradient(135deg,#4a2270,#7B5BA0);
-  padding: 0 8px;
+  padding: 0 8px; position: sticky; top: 44px; z-index: 19;
 }
 .ms-tab {
   flex: 1; padding: 10px 8px; text-align: center; font-size: 11px;
@@ -1052,7 +1051,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .ms-tab.active { color: white; border-bottom-color: white; }
 .ms-week-strip {
   display: flex; background: linear-gradient(135deg,#5a3580,#8B6BB0);
-  padding: 8px 4px; overflow-x: auto;
+  padding: 8px 4px; overflow-x: auto; position: sticky; top: 82px; z-index: 18;
 }
 .ms-day-pill {
   flex: 1; min-width: 44px; display: flex; flex-direction: column;
@@ -1312,6 +1311,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .mob-prof-tabs {
   display: flex; background: white;
   border-bottom: 2px solid rgba(155,125,202,.1);
+  position: sticky; top: 44px; z-index: 10;
 }
 .mob-prof-tab {
   flex: 1; padding: 12px; text-align: center; font-size: 12px;
