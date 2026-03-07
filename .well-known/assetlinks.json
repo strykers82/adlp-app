@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "io.github.strykers82.twa",
-    "sha256_cert_fingerprints": ["6D:FC:C6:6D:EB:A0:E3:2E:EC:1D:E0:A6:EC:5C:DD:2E:27:C5:F9:3E:B4:50:7B:59:B1:A2:4A:1B:BA:E3:40:BF"]
+    "sha256_cert_fingerprints": ["92:77:35:8D:A2:36:EA:6C:5C:E2:29:95:0E:AE:A3:2C:BF:50:FA:5E:FD:19:1D:85:FD:48:AE:77:F6:7A:24:94"]
   }
 }]
