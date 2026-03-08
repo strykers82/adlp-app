@@ -6750,7 +6750,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
       <!-- Notification Bell -->
       <div style="position:relative" id="notifBellWrap">
         <button class="hdr-notif-btn" onclick="toggleNotifPanel(event)" title="Notifications">🔔
-          <span class="notif-badge" id="notifBadge">3</span>
+          <span class="notif-badge" id="notifBadge" style="display:none"></span>
         </button>
         <div class="notif-panel" id="notifPanel" style="display:none">
           <div class="notif-panel-hd">
@@ -13251,7 +13251,7 @@ function closeAllDropdowns() {
 }
 
 function renderNotifPanel() {
-  const notifs = DB.get('notifications') || getDefaultNotifs();
+  const notifs = DB.get('notifications') || [];
   const body = document.getElementById('notifPanelBody');
   if (notifs.length === 0) {
     body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-light)">No notifications</div>';
@@ -13279,7 +13279,7 @@ function getDefaultNotifs() {
 }
 
 function handleNotifClick(id) {
-  const notifs = DB.get('notifications') || getDefaultNotifs();
+  const notifs = DB.get('notifications') || [];
   const n = notifs.find(x => x.id === id);
   if (n) { n.read = true; DB.set('notifications', notifs); }
   updateNotifBadge();
@@ -13287,7 +13287,7 @@ function handleNotifClick(id) {
 }
 
 function markAllNotifsRead() {
-  const notifs = DB.get('notifications') || getDefaultNotifs();
+  const notifs = DB.get('notifications') || [];
   notifs.forEach(n => n.read = true);
   DB.set('notifications', notifs);
   updateNotifBadge();
@@ -13296,7 +13296,7 @@ function markAllNotifsRead() {
 }
 
 function updateNotifBadge() {
-  const notifs = DB.get('notifications') || getDefaultNotifs();
+  const notifs = DB.get('notifications') || [];
   const unread = notifs.filter(n => !n.read).length;
   const badge = document.getElementById('notifBadge');
   if (badge) {
