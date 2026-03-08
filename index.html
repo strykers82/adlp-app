@@ -1168,7 +1168,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .mob-att { display: none; }
 @media (max-width: 768px) {
   #view-timesheets .page-wrapper { display: none; }
-  #view-timesheets .mob-att { display: block; padding-bottom: 70px; background: var(--gray-bg); }
+  #view-timesheets .mob-att { display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 70px; background: var(--gray-bg); }
+}
+.mob-att-content { flex: 1; overflow-y: auto; }
+.mob-att-section-hd {
+  padding: 12px 18px 6px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--text-light);
+}
+.mob-att-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 18px; background: white;
+  border-bottom: 1px solid rgba(155,125,202,.06);
+}
+.mob-att-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.mob-att-info { flex: 1; min-width: 0; }
+.mob-att-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.mob-att-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; line-height: 1.4; }
+.mob-att-dots { font-size: 16px; color: var(--text-light); cursor: pointer; padding: 4px; }
+.mob-att-footer {
+  padding: 12px 18px; background: white;
+  border-top: 1px solid rgba(155,125,202,.08);
+}
+.mob-att-clock-btn {
+  width: 100%; padding: 14px; border: 2px solid rgba(155,125,202,.2);
+  border-radius: 10px; background: white; color: var(--text);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; text-align: center;
+}
+.mob-att-clock-btn:active { background: var(--lav-pale); }
+.mob-att-empty {
+  text-align: center; padding: 40px 20px; color: var(--text-light);
+  font-size: 14px;
 }
 
 /* ── Mobile WorkChat ── */
@@ -8356,11 +8390,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 
         <!-- ══ MOBILE ATTENDANCE - Pay Periods ══ -->
         <div class="mob-att" id="mobAtt">
-          <div class="ms-header">
-            <span class="ms-title">Pay Periods</span>
+          <div class="ms-header" style="justify-content:flex-start;gap:12px">
+            <span style="font-size:20px;cursor:pointer" onclick="mobNav('schedule')">←</span>
+            <span class="ms-title" style="flex:1">Attendance Notices</span>
           </div>
-          <div class="mob-pp-list" id="mobPPList">
+          <div class="mob-att-content" id="mobAttContent">
             <!-- rendered by renderMobAtt -->
+          </div>
+          <div class="mob-att-footer">
+            <button class="mob-att-clock-btn" onclick="showToast('🕐 Clock others feature coming soon')">Clock others in or out?</button>
           </div>
         </div>
 
@@ -21512,7 +21550,8 @@ function mobClockAction() {
     myAtt.clockOut = t; myAtt.status = 'on-time';
     DB.set('attendance', att);
     showToast('✓ Clocked out at ' + fmtTime(t));
-    renderDashboard();
+    if (window.innerWidth <= 768) { try { renderMobDash(dateStr(new Date(TODAY))); } catch(e){} }
+    else { renderDashboard(); }
     return;
   }
 
@@ -21603,7 +21642,8 @@ function doClockIn(att, myAtt, myId, todayStr, siteName) {
   }
   DB.set('attendance', att);
   showToast('✓ Clocked in at ' + fmtTime(t));
-  renderDashboard();
+  if (window.innerWidth <= 768) { try { renderMobDash(dateStr(new Date(TODAY))); } catch(e){} }
+  else { renderDashboard(); }
 }
 
 // ── Mobile Profile ──
@@ -22589,37 +22629,114 @@ function showMobWCChat(channelId) {
 let mobSelectedPP = 0;
 
 function renderMobAtt() {
-  const el = document.getElementById('mobPPList');
+  const el = document.getElementById('mobAttContent');
   if (!el) return;
 
-  const today = new Date(TODAY);
-  const anchor = new Date('2026-02-26'); // Known pay period start
-  const periods = [];
+  const todayStr = dateStr(new Date(TODAY));
+  const staff = getStaff().filter(s => s.status === 'active');
+  const allAtt = getAtt().filter(a => a.date === todayStr);
+  const allShifts = getShifts().filter(s => s.date === todayStr);
 
-  // Generate ~12 pay periods going backward
-  for (let i = 0; i < 12; i++) {
-    const start = new Date(anchor);
-    start.setDate(start.getDate() - i * 14);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 13);
-    const fmtD = d => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    const label = `${fmtD(start)} – ${fmtD(end)}, ${end.getFullYear()}`;
-    periods.push({ start, end, label });
+  // Categorize attendance issues
+  const wrongLocation = [];
+  const lateClockIn = [];
+  const forgotClockOut = [];
+  const noShow = [];
+
+  staff.forEach(s => {
+    const shift = allShifts.find(sh => sh.staffId === s.id);
+    const att = allAtt.find(a => a.staffId === s.id);
+    if (!shift) return; // No shift today, skip
+
+    const pos = shift.position || s.title || 'Direct Support Professional';
+    const site = shift.jobSite || shift.site || shift.location || '';
+    const dept = shift.dept || 'ADLP';
+    const shiftTime = fmtTime(shift.start) + ' – ' + fmtTime(shift.end);
+
+    if (att && att.clockSite && att.clockSite.includes('override')) {
+      wrongLocation.push({ s, desc: `${shiftTime} as ${pos} at ${dept}`, site });
+    }
+
+    if (att && att.clockIn) {
+      // Check if late (more than 5 min after shift start)
+      const [sh, sm] = shift.start.split(':').map(Number);
+      const [ch, cm] = att.clockIn.split(':').map(Number);
+      const shiftMins = sh * 60 + sm;
+      const clockMins = ch * 60 + cm;
+      if (clockMins > shiftMins + 5) {
+        lateClockIn.push({ s, desc: `At ${fmtTime(att.clockIn)} (${fmtTime(shift.start)} – ${fmtTime(shift.end)}) as ${pos} at ${site || dept}` });
+      }
+    }
+
+    if (att && att.clockIn && !att.clockOut) {
+      // Check if shift should have ended by now
+      const now = new Date();
+      const [eh, em] = shift.end.split(':').map(Number);
+      const endMins = eh * 60 + em;
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      if (nowMins > endMins + 15) {
+        forgotClockOut.push({ s, desc: `${shiftTime} as ${pos} at ${site || dept}` });
+      }
+    }
+
+    if (!att && shift) {
+      // No clock in at all, check if shift has started
+      const now = new Date();
+      const [sh2, sm2] = shift.start.split(':').map(Number);
+      const startMins = sh2 * 60 + sm2;
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      if (nowMins > startMins + 15) {
+        noShow.push({ s, desc: `${shiftTime} as ${pos} at ${site || dept}` });
+      }
+    }
+  });
+
+  let html = '';
+
+  if (wrongLocation.length > 0) {
+    html += `<div class="mob-att-section-hd">Wrong Location</div>`;
+    wrongLocation.forEach(item => {
+      html += buildMobAttItem(item.s, item.desc);
+    });
   }
 
-  el.innerHTML = periods.map((p, i) => {
-    const sel = i === mobSelectedPP;
-    return `<div class="mob-pp-item ${sel ? 'selected' : ''}" onclick="selectMobPP(${i})">
-      <span class="mob-pp-label">${p.label}</span>
-      <div class="mob-pp-radio"><div class="mob-pp-radio-dot"></div></div>
-    </div>`;
-  }).join('');
+  if (lateClockIn.length > 0) {
+    html += `<div class="mob-att-section-hd">Late Clock In</div>`;
+    lateClockIn.forEach(item => {
+      html += buildMobAttItem(item.s, item.desc);
+    });
+  }
+
+  if (forgotClockOut.length > 0) {
+    html += `<div class="mob-att-section-hd">Forgot to Clock Out</div>`;
+    forgotClockOut.forEach(item => {
+      html += buildMobAttItem(item.s, item.desc);
+    });
+  }
+
+  if (noShow.length > 0) {
+    html += `<div class="mob-att-section-hd">No Show</div>`;
+    noShow.forEach(item => {
+      html += buildMobAttItem(item.s, item.desc);
+    });
+  }
+
+  if (!html) {
+    html = '<div class="mob-att-empty">✅ No attendance issues today.<br>All staff are on track!</div>';
+  }
+
+  el.innerHTML = html;
 }
 
-function selectMobPP(idx) {
-  mobSelectedPP = idx;
-  renderMobAtt();
-  showToast('📅 Pay period selected');
+function buildMobAttItem(s, desc) {
+  return `<div class="mob-att-item">
+    <div class="mob-att-av" style="background:${s.color || '#9A70BB'}">${s.initials || s.first[0]}</div>
+    <div class="mob-att-info">
+      <div class="mob-att-name">${s.first} ${s.last}</div>
+      <div class="mob-att-desc">${desc}</div>
+    </div>
+    <span class="mob-att-dots">⋮</span>
+  </div>`;
 }
 
 // ── Swipe Gesture Handler — follows finger ──
